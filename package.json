@@ -14,7 +14,7 @@
         "README.md"
     ],
     "dependencies": {
-        "@sj-treemap/core": "git+ssh://github.com/sysjust-xtm-rn/treemap-core.git#v1.2.0"
+        "@sj-treemap/core": "git+https://github.com/sysjust-xtm-rn/treemap-core.git#v1.2.0"
     },
     "peerDependencies": {
         "react": "^18.2.0",
