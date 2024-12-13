@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -45,62 +34,44 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TreeMapCell = exports.FlexTreeMapRecursor = exports.FlexTreeMapRenderer = exports.FixedTreeMapRenderer = exports.useTree = exports.getRectFromTree = exports.getTree = void 0;
-var react_1 = __importStar(require("react"));
-var core_1 = require("@sj-treemap/core");
-Object.defineProperty(exports, "getTree", { enumerable: true, get: function () { return core_1.getTree; } });
-Object.defineProperty(exports, "getRectFromTree", { enumerable: true, get: function () { return core_1.getRectFromTree; } });
-function useTree(sideRatio, valueFetcher) {
-    return (0, react_1.useMemo)(function () {
-        var valueArray = [];
-        for (var i = 0; true; i++) {
-            var value = valueFetcher(i);
-            if (!value || value <= 0)
-                break;
-            valueArray.push(value);
-        }
-        return (0, core_1.getTree)(sideRatio, valueArray);
-    }, [valueFetcher, sideRatio]);
-}
-exports.useTree = useTree;
-exports.FixedTreeMapRenderer = (0, react_1.memo)(function (_a) {
-    var width = _a.width, sideRatio = _a.sideRatio, tree = _a.tree, cellRenderer = _a.cellRenderer;
-    return (react_1.default.createElement(react_1.default.Fragment, null, (0, core_1.getRectFromTree)(width, sideRatio * width, tree).map(function (_a) {
-        var key = _a.key, rect = __rest(_a, ["key"]);
-        return (react_1.default.createElement(exports.TreeMapCell, { key: key, dataIndex: key, style: __assign({ position: 'absolute' }, rect), cellRenderer: cellRenderer }));
+exports.defaultRenderCell = exports.TreeMapCell = exports.FlexTreeMapRecursor = exports.FlexTreeMapRenderer = exports.FixedTreeMapRenderer = void 0;
+const react_1 = __importStar(require("react"));
+const core_1 = require("@sj-treemap/core");
+exports.FixedTreeMapRenderer = (0, react_1.memo)(function FixedTreeMapRenderer({ width, height, tree, cellRenderer }) {
+    return (react_1.default.createElement(react_1.default.Fragment, null, (0, core_1.getRectFromTree)(width, height, tree).map((_a) => {
+        var { key } = _a, rect = __rest(_a, ["key"]);
+        return (react_1.default.createElement(exports.TreeMapCell, { key: key, dataIndex: key, style: Object.assign({ position: 'absolute' }, rect), cellRenderer: cellRenderer }));
     })));
 });
-exports.FlexTreeMapRenderer = (0, react_1.memo)(function (_a) {
-    var sideRatio = _a.sideRatio, restProps = __rest(_a, ["sideRatio"]);
-    return (react_1.default.createElement(exports.FlexTreeMapRecursor, __assign({}, restProps, { sideRatio: sideRatio, remain: 1 })));
+exports.FlexTreeMapRenderer = (0, react_1.memo)(function FlexTreeMapRenderer(props) {
+    return react_1.default.createElement(exports.FlexTreeMapRecursor, Object.assign({}, props, { remain: 1 }));
 });
-var FlexTreeMapRecursor = function (_a) {
-    var tree = _a.tree, sideRatio = _a.sideRatio, remain = _a.remain, DivideContainer = _a.DivideContainer, cellRenderer = _a.cellRenderer;
-    var width = 1;
-    var height = sideRatio;
-    var layerValueSum = tree.reduce(function (sum, _a) {
-        var value = _a.value;
-        return sum + value;
-    }, 0);
-    var newRemain = remain - layerValueSum;
-    var newWidth = width > height ? (width * newRemain) / remain : width;
-    var newHeight = width > height ? height : (height * newRemain) / remain;
-    return (react_1.default.createElement(DivideContainer, { style: { display: 'flex', width: '100%', height: '100%', flexDirection: width > height ? 'row' : 'column' } },
+const FlexTreeMapRecursor = ({ tree, sideRatio, remain, divideContainer: DivideContainer, cellRenderer, }) => {
+    if (!remain)
+        return null;
+    const width = 1;
+    const height = sideRatio;
+    const isHorizontal = width > height;
+    const layerValueSum = tree.reduce((sum, { value }) => sum + value, 0);
+    const newRemain = remain - layerValueSum;
+    const newWidth = isHorizontal ? (width * newRemain) / remain : width;
+    const newHeight = isHorizontal ? height : (height * newRemain) / remain;
+    return (react_1.default.createElement(DivideContainer, { style: { display: 'flex', width: '100%', height: '100%', flexDirection: isHorizontal ? 'row' : 'column' } },
         react_1.default.createElement(DivideContainer, { style: {
                 display: 'flex',
-                flexDirection: width > height ? 'column' : 'row',
+                flexDirection: isHorizontal ? 'column' : 'row',
                 flexBasis: 0,
                 flexGrow: layerValueSum / remain,
-            } }, tree.map(function (_a) {
-            var value = _a.value, key = _a.key;
-            return (react_1.default.createElement(exports.TreeMapCell, { key: key, dataIndex: key, style: { flexBasis: 0, flexGrow: value / layerValueSum }, cellRenderer: cellRenderer }));
-        })),
+            } }, tree.map(({ value, key }) => (react_1.default.createElement(exports.TreeMapCell, { key: key, dataIndex: key, style: { flexBasis: 0, flexGrow: value / layerValueSum }, cellRenderer: cellRenderer })))),
         tree.next && (react_1.default.createElement(DivideContainer, { style: { display: 'flex', flexBasis: 0, flexGrow: newRemain / remain } },
-            react_1.default.createElement(exports.FlexTreeMapRecursor, { tree: tree.next, sideRatio: newHeight / newWidth, remain: newRemain, DivideContainer: DivideContainer, cellRenderer: cellRenderer })))));
+            react_1.default.createElement(exports.FlexTreeMapRecursor, { tree: tree.next, sideRatio: newHeight / newWidth, remain: newRemain, divideContainer: DivideContainer, cellRenderer: cellRenderer })))));
 };
 exports.FlexTreeMapRecursor = FlexTreeMapRecursor;
-var TreeMapCell = function (_a) {
-    var dataIndex = _a.dataIndex, style = _a.style, cellRenderer = _a.cellRenderer;
-    return cellRenderer(dataIndex, style);
-};
+const TreeMapCell = ({ dataIndex, style, cellRenderer }) => cellRenderer(dataIndex, style);
 exports.TreeMapCell = TreeMapCell;
+const defaultRenderCell = (style) => react_1.default.createElement("div", { style: Object.assign(Object.assign({}, style), style_defaultCell), "data-testid": "defaultRenderCell" });
+exports.defaultRenderCell = defaultRenderCell;
+const style_defaultCell = {
+    border: 'solid black 1px',
+    boxSizing: 'border-box',
+};
